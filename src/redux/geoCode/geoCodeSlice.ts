@@ -1,22 +1,27 @@
 import { createSlice } from '@reduxjs/toolkit';
+import toastr from 'toastr';
 
 // API
 import { geoCodeApi } from 'services';
+
+// Utils
+import { isEmpty } from 'utils';
 
 // Type
 import { GeoCodeReduxState } from 'types';
 
 export const geoCodeSlice = createSlice({
   name: 'geoCode',
-  initialState: <GeoCodeReduxState>{
+  initialState: {
     addressMatches: [],
-    error: '',
-  },
+    error: [],
+  } as GeoCodeReduxState,
   reducers: {
     getGeoCode: (state, action) => {
       state.addressMatches = action.payload;
     },
     getErrors: (state, action) => {
+      action.payload.map((item: string) => toastr.error(action.payload));
       state.error = action.payload;
     },
   },
@@ -40,10 +45,14 @@ export const fetchGeoCode: any =
     geoCodeApi
       .getGeoCode(queryString)
       .then((res) => {
-        console.log(res.data);
-        dispatch(getGeoCode(res.data)); // Save geological code in Redux Store
+        // Validation
+        if (isEmpty(res.data.result.addressMatches)) {
+          dispatch(getErrors(['Not found that address']));
+        } else {
+          dispatch(getGeoCode(res.data.result.addressMatches)); // Save geological code in Redux Store
+        }
       })
       .catch((err) => {
-        dispatch(getErrors(err));
+        dispatch(getErrors(err.response.data.errors));
       });
   };

@@ -38,10 +38,10 @@ export const initAddress = (options?: Partial<Address>): Address => {
 // Redux Data Type
 export type WeatherReduxState = {
   periods: object[];
-  error: string;
+  error: string[];
 };
 
 export type GeoCodeReduxState = {
   addressMatches: object[];
-  error: string;
+  error: string[];
 };

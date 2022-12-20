@@ -9,7 +9,9 @@ const getWeatherForecast = (forecastUrl: string) => {
   return axios.get(forecastUrl);
 };
 
-export default {
+const weatherApi = {
   getForecastApi,
   getWeatherForecast,
 };
+
+export default weatherApi;

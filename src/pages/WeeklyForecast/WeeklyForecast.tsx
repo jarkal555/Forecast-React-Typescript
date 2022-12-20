@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { DataGrid } from '@mui/x-data-grid';
+import toastr from 'toastr';
 
 // Components
-import TodayForecast from 'components/TodayForecast';
 import AddressForm from 'components/AddressForm';
 
 // Utils
-import { toCelsius } from 'utils';
+import { isEmpty, toCelsius } from 'utils';
 
 // actions
 import { fetchWeather } from 'redux/weather/weatherSlice';
@@ -28,21 +28,23 @@ const theme = createTheme({
 const WeeklyForecast: React.FC = (): React.ReactElement => {
   const dispatch: Dispatch<AnyAction> = useDispatch();
   const periods = useSelector((state: any) => state.weather.periods);
-  const addressMatches = useSelector(
+  const addressMatches: any[] = useSelector(
     (state: any) => state.geoCode.addressMatches
   );
 
   let rows: any = [];
-  for (let i = 0; i < periods.length; i += 2) {
-    rows.push({
-      id: periods[i].number / 2 + 1,
-      icon: periods[i].icon,
-      date: periods[i].name,
-      forecast: periods[i].shortForecast,
-      description: periods[i].detailedForecast,
-      temperature: toCelsius(periods[i].temperature) + '°C',
-      wind: periods[i].windDirection + ': ' + periods[i].windSpeed,
-    });
+  for (let i = 0; i < periods.length; i++) {
+    if (periods[i].isDaytime) {
+      rows.push({
+        id: periods[i].number / 2 + 1,
+        icon: periods[i].icon,
+        date: periods[i].name,
+        forecast: periods[i].shortForecast,
+        description: periods[i].detailedForecast,
+        temperature: toCelsius(periods[i].temperature) + '°C',
+        wind: periods[i].windDirection + ': ' + periods[i].windSpeed,
+      });
+    }
   }
 
   const columns: GridColDef[] = [
@@ -51,25 +53,25 @@ const WeeklyForecast: React.FC = (): React.ReactElement => {
       headerName: 'Demo',
       headerAlign: 'center',
       width: 80,
-      renderCell: (params) => <img src={params.value} />,
+      renderCell: (params) => <img src={params.value} alt={'demo'} />,
     },
     {
       field: 'date',
       headerName: 'Date',
       headerAlign: 'center',
-      width: 100,
+      width: 150,
     },
     {
       field: 'forecast',
       headerName: 'Forecast',
       headerAlign: 'center',
-      width: 180,
+      width: 200,
     },
     {
       field: 'description',
       headerName: 'Description',
       headerAlign: 'center',
-      width: 400,
+      width: 550,
     },
     {
       field: 'temperature',
@@ -81,20 +83,24 @@ const WeeklyForecast: React.FC = (): React.ReactElement => {
       field: 'wind',
       headerName: 'Wind',
       headerAlign: 'center',
-      width: 150,
+      width: 200,
     },
   ];
 
   useLayoutEffect(() => {
-    dispatch(fetchWeather([39.7456, -97.0892]));
-  }, [addressMatches]);
+    if (isEmpty(addressMatches)) {
+      toastr.info('Please type your address.');
+    } else {
+      let { x, y } = addressMatches[0].coordinates;
+      dispatch(fetchWeather([y.toFixed(4), x.toFixed(4)]));
+    }
+  }, [dispatch, addressMatches]);
 
   return (
     <>
-      {/* <TodayForecast /> */}
       <ThemeProvider theme={theme}>
         <AddressForm />
-        <div style={{ height: '450px', width: '100%' }}>
+        <div style={{ height: '450px', width: '100%', marginTop: '20px' }}>
           <DataGrid hideFooter={true} rows={rows} columns={columns} />
         </div>
       </ThemeProvider>
